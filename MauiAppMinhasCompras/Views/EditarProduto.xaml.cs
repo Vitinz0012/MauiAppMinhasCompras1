@@ -13,23 +13,41 @@ public partial class EditarProduto : ContentPage
     {
         try
         {
-            Produto produto_anexado = BindingContext as Produto;
+            if (BindingContext is not Produto produtoAnexado)
+            {
+                throw new Exception("Erro ao carregar o produto.");
+            }
+
+            if (string.IsNullOrWhiteSpace(txt_descricao.Text))
+            {
+                throw new Exception("Preencha a descrição.");
+            }
+
+            if (!double.TryParse(txt_quantidade.Text, out double quantidade))
+            {
+                throw new Exception("Quantidade inválida.");
+            }
+
+            if (!double.TryParse(txt_preco.Text, out double preco))
+            {
+                throw new Exception("Preço inválido.");
+            }
 
             Produto p = new Produto
             {
-                Id = produto_anexado.Id,
+                Id = produtoAnexado.Id,
                 Descricao = txt_descricao.Text,
-                Quantidade = Convert.ToDouble(txt_quantidade.Text),
-                Preco = Convert.ToDouble(txt_preco.Text)
+                Quantidade = quantidade,
+                Preco = preco
             };
 
             await App.Db.Update(p);
-            await DisplayAlert("Sucesso!", "Registro Atualizado", "OK");
+            await DisplayAlertAsync("Sucesso!", "Registro Atualizado", "OK");
             await Navigation.PopAsync();
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Ops", ex.Message, "OK");
+            await DisplayAlertAsync("Ops", ex.Message, "OK");
         }
     }
 }
