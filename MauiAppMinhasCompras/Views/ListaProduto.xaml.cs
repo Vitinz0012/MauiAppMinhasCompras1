@@ -32,7 +32,7 @@ public partial class ListaProduto : ContentPage
         }
     }
 
-    private async void ToolbarItem_Clicked(object sender, EventArgs e)
+    private async void ToolbarItem_Clicked(object? sender, EventArgs e)
     {
         try
         {
@@ -44,7 +44,7 @@ public partial class ListaProduto : ContentPage
         }
     }
 
-    private async void txt_search_TextChanged(object sender, TextChangedEventArgs e)
+    private async void txt_search_TextChanged(object? sender, TextChangedEventArgs e)
     {
         try
         {
@@ -63,7 +63,7 @@ public partial class ListaProduto : ContentPage
         }
     }
 
-    private async void ToolbarItem_Clicked_1(object sender, EventArgs e)
+    private async void ToolbarItem_Clicked_1(object? sender, EventArgs e)
     {
         double soma = lista.Sum(i => i.Total);
 
@@ -72,7 +72,7 @@ public partial class ListaProduto : ContentPage
         await this.DisplayAlertAsync("Total dos Produtos", msg, "OK");
     }
 
-    private async void MenuItem_Clicked(object sender, EventArgs e)
+    private async void MenuItem_Clicked(object? sender, EventArgs e)
     {
         try
         {
@@ -97,7 +97,7 @@ public partial class ListaProduto : ContentPage
         }
     }
 
-    private async void lst_produtos_ItemSelected(object sender, SelectedItemChangedEventArgs e)
+    private async void lst_produtos_ItemSelected(object? sender, SelectedItemChangedEventArgs e)
     {
         try
         {
@@ -110,6 +110,30 @@ public partial class ListaProduto : ContentPage
             });
 
             lst_produtos.SelectedItem = null; // limpa seleção
+        }
+        catch (Exception ex)
+        {
+            await this.DisplayAlertAsync("Ops", ex.Message, "OK");
+        }
+    }
+
+    private async void lst_produtos_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        try
+        {
+            if (e.CurrentSelection == null || e.CurrentSelection.Count == 0)
+                return;
+
+            if (e.CurrentSelection[0] is not Produto p)
+                return;
+
+            await Navigation.PushAsync(new Views.EditarProduto
+            {
+                BindingContext = p,
+            });
+
+            if (sender is CollectionView cv)
+                cv.SelectedItem = null; // limpa seleção
         }
         catch (Exception ex)
         {
