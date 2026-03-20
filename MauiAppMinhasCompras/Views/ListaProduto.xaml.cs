@@ -26,7 +26,7 @@ public partial class ListaProduto : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Erro", ex.Message, "OK");
+            await DisplayAlert("Ops", ex.Message, "OK");
         }
     }
 
@@ -35,6 +35,7 @@ public partial class ListaProduto : ContentPage
         try
         {
             Navigation.PushAsync(new Views.NovoProduto());
+
         }
         catch (Exception ex)
         {
@@ -50,22 +51,13 @@ public partial class ListaProduto : ContentPage
 
             lista.Clear();
 
-            List<Produto> tmp;
-
-            if (string.IsNullOrWhiteSpace(q))
-            {
-                tmp = await App.Db.GetAll();
-            }
-            else
-            {
-                tmp = await App.Db.Search(q);
-            }
+            List<Produto> tmp = await App.Db.Search(q);
 
             tmp.ForEach(i => lista.Add(i));
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Erro", ex.Message, "OK");
+            await DisplayAlert("Ops", ex.Message, "OK");
         }
     }
 
@@ -82,23 +74,39 @@ public partial class ListaProduto : ContentPage
     {
         try
         {
-            MenuItem menu = sender as MenuItem;
+            MenuItem selecinado = sender as MenuItem;
 
-            Produto produto = menu.BindingContext as Produto;
+            Produto p = selecinado.BindingContext as Produto;
 
-            bool confirmar = await DisplayAlert("Confirmar",
-                "Deseja remover o produto?", "Sim", "Não");
+            bool confirm = await DisplayAlert(
+                "Tem Certeza?", $"Remover {p.Descricao}?", "Sim", "Não");
 
-            if (confirmar)
+            if (confirm)
             {
-                await App.Db.Delete(produto.Id);
-
-                lista.Remove(produto);
+                await App.Db.Delete(p.Id);
+                lista.Remove(p);
             }
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Erro", ex.Message, "OK");
+            await DisplayAlert("Ops", ex.Message, "OK");
+        }
+    }
+
+    private void lst_produtos_ItemSelected(object sender, SelectedItemChangedEventArgs e)
+    {
+        try
+        {
+            Produto p = e.SelectedItem as Produto;
+
+            Navigation.PushAsync(new Views.EditarProduto
+            {
+                BindingContext = p,
+            });
+        }
+        catch (Exception ex)
+        {
+            DisplayAlert("Ops", ex.Message, "OK");
         }
     }
 }
