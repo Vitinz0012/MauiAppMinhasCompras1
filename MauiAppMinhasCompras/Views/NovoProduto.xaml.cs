@@ -13,17 +13,23 @@ public partial class NovoProduto : ContentPage
     {
         try
         {
+            if (picker_categoria.SelectedItem == null)
+            {
+                await DisplayAlertAsync("Erro", "Escolha uma categoria", "OK");
+                return;
+            }
+
             Produto p = new Produto
             {
                 Descricao = txt_descricao.Text,
                 Quantidade = Convert.ToDouble(txt_quantidade.Text),
-                Preco = Convert.ToDouble(txt_preco.Text)
+                Preco = Convert.ToDouble(txt_preco.Text),
+                Categoria = picker_categoria.SelectedItem.ToString()
             };
 
             await App.Db.Insert(p);
             await DisplayAlertAsync("Sucesso!", "Registro Inserido", "OK");
             await Navigation.PopAsync();
-
         }
         catch (Exception ex)
         {

@@ -19,6 +19,13 @@
         <Entry x:Name="txt_preco" Keyboard="Numeric" />
 
         <Label Text="Categoria:" />
-        <Entry x:Name="txt_categoria" />
+
+        <Picker x:Name="picker_categoria" Title="Selecione a categoria">
+            <Picker.Items>
+                <x:String>Alimentos</x:String>
+                <x:String>Higiene</x:String>
+                <x:String>Limpeza</x:String>
+            </Picker.Items>
+        </Picker>
     </VerticalStackLayout>
 </ContentPage>
