@@ -1,22 +1,45 @@
-using MauiAppMinhasCompras.Models;
+using System;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Maui.Controls;
+using MauiAppMinhasCompras.Models;
 
 namespace MauiAppMinhasCompras.Views;
 
 public partial class ListaProduto : ContentPage
 {
     ObservableCollection<Produto> lista = new();
+    private CollectionView? lst_produtos;
 
     public ListaProduto()
     {
         InitializeComponent();
-        lst_produtos.ItemsSource = lista;
+        lst_produtos?.ItemsSource = lista;
+    }
+
+    private void InitializeComponent()
+    {
+        // Tenta resolver o elemento nomeado "lst_produtos" caso o registro via XAML não tenha ocorrido
+        try
+        {
+            lst_produtos = (CollectionView?)FindByName("lst_produtos");
+        }
+        catch
+        {
+            lst_produtos = null;
+        }
     }
 
     protected async override void OnAppearing()
     {
         base.OnAppearing();
 
+        await CarregarLista();
+    }
+
+    private async Task CarregarLista()
+    {
         try
         {
             lista.Clear();
@@ -28,7 +51,7 @@ public partial class ListaProduto : ContentPage
         }
         catch (Exception ex)
         {
-            await this.DisplayAlertAsync("Ops", ex.Message, "OK");
+            await DisplayAlertAsync("Ops", ex.Message, "OK");
         }
     }
 
@@ -36,11 +59,11 @@ public partial class ListaProduto : ContentPage
     {
         try
         {
-            await Navigation.PushAsync(new Views.NovoProduto());
+            await Navigation.PushAsync(new NovoProduto());
         }
         catch (Exception ex)
         {
-            await this.DisplayAlertAsync("Ops", ex.Message, "OK");
+            await DisplayAlertAsync("Ops", ex.Message, "OK");
         }
     }
 
@@ -49,6 +72,8 @@ public partial class ListaProduto : ContentPage
         try
         {
             string q = e.NewTextValue ?? string.Empty;
+
+            SetRefreshing(true);
 
             lista.Clear();
 
@@ -59,7 +84,11 @@ public partial class ListaProduto : ContentPage
         }
         catch (Exception ex)
         {
-            await this.DisplayAlertAsync("Ops", ex.Message, "OK");
+            await DisplayAlertAsync("Ops", ex.Message, "OK");
+        }
+        finally
+        {
+            SetRefreshing(false);
         }
     }
 
@@ -69,7 +98,7 @@ public partial class ListaProduto : ContentPage
 
         string msg = $"O total é {soma:C}";
 
-        await this.DisplayAlertAsync("Total dos Produtos", msg, "OK");
+        await DisplayAlertAsync("Total dos Produtos", msg, "OK");
     }
 
     private async void MenuItem_Clicked(object? sender, EventArgs e)
@@ -82,8 +111,11 @@ public partial class ListaProduto : ContentPage
             if (selecionado.BindingContext is not Produto p)
                 return;
 
-            bool confirm = await this.DisplayAlertAsync(
-                "Tem Certeza?", $"Remover {p.Descricao}?", "Sim", "Não");
+            bool confirm = await DisplayAlertAsync(
+                "Tem certeza?",
+                $"Remover {p.Descricao}?",
+                "Sim",
+                "Não");
 
             if (confirm)
             {
@@ -93,27 +125,7 @@ public partial class ListaProduto : ContentPage
         }
         catch (Exception ex)
         {
-            await this.DisplayAlertAsync("Ops", ex.Message, "OK");
-        }
-    }
-
-    private async void lst_produtos_ItemSelected(object? sender, SelectedItemChangedEventArgs e)
-    {
-        try
-        {
-            if (e.SelectedItem is not Produto p)
-                return;
-
-            await Navigation.PushAsync(new Views.EditarProduto
-            {
-                BindingContext = p,
-            });
-
-            lst_produtos.SelectedItem = null; // limpa seleção
-        }
-        catch (Exception ex)
-        {
-            await this.DisplayAlertAsync("Ops", ex.Message, "OK");
+            await DisplayAlertAsync("Ops", ex.Message, "OK");
         }
     }
 
@@ -127,17 +139,48 @@ public partial class ListaProduto : ContentPage
             if (e.CurrentSelection[0] is not Produto p)
                 return;
 
-            await Navigation.PushAsync(new Views.EditarProduto
+            await Navigation.PushAsync(new EditarProduto
             {
                 BindingContext = p,
             });
 
             if (sender is CollectionView cv)
-                cv.SelectedItem = null; // limpa seleção
+                cv.SelectedItem = null;
         }
         catch (Exception ex)
         {
-            await this.DisplayAlertAsync("Ops", ex.Message, "OK");
+            await DisplayAlertAsync("Ops", ex.Message, "OK");
+        }
+    }
+
+    private async void lst_produtos_Refreshing(object sender, EventArgs e)
+    {
+        if (sender is not RefreshView rv)
+            return;
+
+        try
+        {
+            await CarregarLista();
+        }
+        finally
+        {
+            rv.IsRefreshing = false;
+        }
+    }
+
+    private void SetRefreshing(bool value)
+    {
+        Element? element = lst_produtos;
+
+        while (element != null)
+        {
+            if (element is RefreshView rv)
+            {
+                rv.IsRefreshing = value;
+                return;
+            }
+
+            element = element.Parent;
         }
     }
 }

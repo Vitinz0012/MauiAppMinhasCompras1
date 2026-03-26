@@ -2,44 +2,86 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MauiAppMinhasCompras.Views.ListaProduto"
-             Title="Minhas Compras">
+             Title="Minhas Compras"
+             BackgroundColor="{AppThemeBinding Light=White, Dark=#2B2B2B}">
 
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="Somar" Clicked="ToolbarItem_Clicked_1" />
         <ToolbarItem Text="Adicionar" Clicked="ToolbarItem_Clicked" />
     </ContentPage.ToolbarItems>
 
+    <ContentPage.Resources>
+        <ResourceDictionary>
+
+            <Style TargetType="Label">
+                <Setter Property="VerticalTextAlignment" Value="Center" />
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark=White}" />
+            </Style>
+
+            <Style x:Key="cabecalho" TargetType="Grid">
+                <Setter Property="BackgroundColor"
+                        Value="{AppThemeBinding Light=LightGray, Dark=#1E1E1E}" />
+            </Style>
+
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
     <VerticalStackLayout>
-        <SearchBar x:Name="txt_search" 
+
+        <SearchBar x:Name="txt_search"
                    Placeholder="Busca de Produtos"
-                   TextChanged="txt_search_TextChanged"/>
-        <Grid ColumnDefinitions="*, *, *, *, *">
-            <Label Grid.Column="0" Text="ID" />
-            <Label Grid.Column="1" Text="Descrição" />
-            <Label Grid.Column="2" Text="Preço" />
-            <Label Grid.Column="3" Text="Qnt" />
-            <Label Grid.Column="4" Text="Total" />
+                   TextChanged="txt_search_TextChanged"
+                   Margin="0,5"/>
+
+        <!-- Cabeçalho -->
+        <Grid ColumnDefinitions="*, *, *, *, *"
+              Style="{StaticResource cabecalho}"
+              Padding="5">
+
+            <Label Grid.Column="0" Text="ID" FontAttributes="Bold"/>
+            <Label Grid.Column="1" Text="Descrição" FontAttributes="Bold"/>
+            <Label Grid.Column="2" Text="Preço" FontAttributes="Bold"/>
+            <Label Grid.Column="3" Text="Qnt" FontAttributes="Bold"/>
+            <Label Grid.Column="4" Text="Total" FontAttributes="Bold"/>
+
         </Grid>
 
-        <CollectionView x:Name="lst_produtos" SelectionMode="Single" SelectionChanged="lst_produtos_SelectionChanged">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <SwipeView>
-                        <SwipeView.RightItems>
-                            <SwipeItems Mode="Execute">
-                                <SwipeItem Text="Remover" Invoked="MenuItem_Clicked" BackgroundColor="Red" />
-                            </SwipeItems>
-                        </SwipeView.RightItems>
-                        <Grid ColumnDefinitions="*, *, *, *, *" Padding="8">
-                            <Label Grid.Column="0" Text="{Binding Id}" />
-                            <Label Grid.Column="1" Text="{Binding Descricao}" />
-                            <Label Grid.Column="2" Text="{Binding Preco}" />
-                            <Label Grid.Column="3" Text="{Binding Quantidade}" />
-                            <Label Grid.Column="4" Text="{Binding Total}" />
-                        </Grid>
-                    </SwipeView>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+        <!-- 🔥 Refresh + Lista -->
+        <RefreshView Refreshing="lst_produtos_Refreshing">
+
+            <CollectionView x:Name="lst_produtos"
+                            SelectionMode="Single"
+                            SelectionChanged="lst_produtos_SelectionChanged">
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <SwipeView>
+
+                            <SwipeView.RightItems>
+                                <SwipeItems Mode="Execute">
+                                    <SwipeItem Text="Remover"
+                                               BackgroundColor="Red"
+                                               Invoked="MenuItem_Clicked" />
+                                </SwipeItems>
+                            </SwipeView.RightItems>
+
+                            <Grid ColumnDefinitions="*, *, *, *, *" Padding="8">
+
+                                <Label Grid.Column="0" Text="{Binding Id}" />
+                                <Label Grid.Column="1" Text="{Binding Descricao}" />
+                                <Label Grid.Column="2" Text="{Binding Preco, StringFormat='{}{0:c}'}" />
+                                <Label Grid.Column="3" Text="{Binding Quantidade}" />
+                                <Label Grid.Column="4" Text="{Binding Total, StringFormat='{}{0:c}'}" />
+
+                            </Grid>
+
+                        </SwipeView>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+            </CollectionView>
+
+        </RefreshView>
+
     </VerticalStackLayout>
 </ContentPage>
