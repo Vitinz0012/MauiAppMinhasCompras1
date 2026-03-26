@@ -1,8 +1,5 @@
-using System;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Maui.Controls;
 using MauiAppMinhasCompras.Models;
 
 namespace MauiAppMinhasCompras.Views;
@@ -10,31 +7,16 @@ namespace MauiAppMinhasCompras.Views;
 public partial class ListaProduto : ContentPage
 {
     ObservableCollection<Produto> lista = new();
-    private CollectionView? lst_produtos;
 
     public ListaProduto()
     {
         InitializeComponent();
-        lst_produtos?.ItemsSource = lista;
-    }
-
-    private void InitializeComponent()
-    {
-        // Tenta resolver o elemento nomeado "lst_produtos" caso o registro via XAML não tenha ocorrido
-        try
-        {
-            lst_produtos = (CollectionView?)FindByName("lst_produtos");
-        }
-        catch
-        {
-            lst_produtos = null;
-        }
+        lst_produtos.ItemsSource = lista;
     }
 
     protected async override void OnAppearing()
     {
         base.OnAppearing();
-
         await CarregarLista();
     }
 
@@ -43,79 +25,71 @@ public partial class ListaProduto : ContentPage
         try
         {
             lista.Clear();
-
-            List<Produto> tmp = await App.Db.GetAll();
-
-            foreach (var item in tmp)
-                lista.Add(item);
-        }
-        catch (Exception ex)
-        {
-            await DisplayAlertAsync("Ops", ex.Message, "OK");
-        }
-    }
-
-    private async void ToolbarItem_Clicked(object? sender, EventArgs e)
-    {
-        try
-        {
-            await Navigation.PushAsync(new NovoProduto());
-        }
-        catch (Exception ex)
-        {
-            await DisplayAlertAsync("Ops", ex.Message, "OK");
-        }
-    }
-
-    private async void txt_search_TextChanged(object? sender, TextChangedEventArgs e)
-    {
-        try
-        {
-            string q = e.NewTextValue ?? string.Empty;
-
-            SetRefreshing(true);
-
-            lista.Clear();
-
-            List<Produto> tmp = await App.Db.Search(q);
+            var tmp = await App.Db.GetAll();
 
             foreach (var item in tmp)
                 lista.Add(item);
         }
         catch (Exception ex)
         {
-            await DisplayAlertAsync("Ops", ex.Message, "OK");
-        }
-        finally
-        {
-            SetRefreshing(false);
+            await DisplayAlertAsync("Erro", ex.Message, "OK");
         }
     }
 
-    private async void ToolbarItem_Clicked_1(object? sender, EventArgs e)
+    private async void ToolbarItem_Clicked(object sender, EventArgs e)
+    {
+        await Navigation.PushAsync(new NovoProduto());
+    }
+
+    private async void txt_search_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        string q = e.NewTextValue ?? "";
+
+        lista.Clear();
+
+        var tmp = await App.Db.Search(q);
+
+        foreach (var item in tmp)
+            lista.Add(item);
+    }
+
+    private async void ToolbarItem_Clicked_1(object sender, EventArgs e)
     {
         double soma = lista.Sum(i => i.Total);
-
-        string msg = $"O total é {soma:C}";
-
-        await DisplayAlertAsync("Total dos Produtos", msg, "OK");
+        await DisplayAlertAsync("Total", $"Total: {soma:C}", "OK");
     }
 
-    private async void MenuItem_Clicked(object? sender, EventArgs e)
+    private async void picker_categoria_SelectedIndexChanged(object sender, EventArgs e)
     {
-        try
+        string categoria = picker_categoria.SelectedItem?.ToString();
+
+        lista.Clear();
+
+        var dados = await App.Db.GetAll();
+
+        if (categoria != "Todos")
+            dados = dados.Where(p => p.Categoria == categoria).ToList();
+
+        foreach (var item in dados)
+            lista.Add(item);
+    }
+
+    private async void Relatorio_Clicked(object sender, EventArgs e)
+    {
+        var relatorio = lista
+            .GroupBy(p => p.Categoria)
+            .Select(g => $"{g.Key}: {g.Sum(x => x.Total):C}");
+
+        string msg = string.Join("\n", relatorio);
+
+        await DisplayAlertAsync("Relatório", msg, "OK");
+    }
+
+    private async void MenuItem_Clicked(object sender, EventArgs e)
+    {
+        if (sender is MenuItem m && m.BindingContext is Produto p)
         {
-            if (sender is not MenuItem selecionado)
-                return;
-
-            if (selecionado.BindingContext is not Produto p)
-                return;
-
-            bool confirm = await DisplayAlertAsync(
-                "Tem certeza?",
-                $"Remover {p.Descricao}?",
-                "Sim",
-                "Não");
+            bool confirm = await DisplayAlertAsync("Confirmar", $"Remover {p.Descricao}?", "Sim", "Não");
 
             if (confirm)
             {
@@ -123,64 +97,26 @@ public partial class ListaProduto : ContentPage
                 lista.Remove(p);
             }
         }
-        catch (Exception ex)
-        {
-            await DisplayAlertAsync("Ops", ex.Message, "OK");
-        }
     }
 
-    private async void lst_produtos_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private async void lst_produtos_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        try
-        {
-            if (e.CurrentSelection == null || e.CurrentSelection.Count == 0)
-                return;
+        if (e.CurrentSelection.Count == 0)
+            return;
 
-            if (e.CurrentSelection[0] is not Produto p)
-                return;
+        var p = e.CurrentSelection[0] as Produto;
 
-            await Navigation.PushAsync(new EditarProduto
-            {
-                BindingContext = p,
-            });
+        await Navigation.PushAsync(new EditarProduto { BindingContext = p });
 
-            if (sender is CollectionView cv)
-                cv.SelectedItem = null;
-        }
-        catch (Exception ex)
-        {
-            await DisplayAlertAsync("Ops", ex.Message, "OK");
-        }
+        ((CollectionView)sender).SelectedItem = null;
     }
 
     private async void lst_produtos_Refreshing(object sender, EventArgs e)
     {
-        if (sender is not RefreshView rv)
-            return;
-
-        try
+        if (sender is RefreshView rv)
         {
             await CarregarLista();
-        }
-        finally
-        {
             rv.IsRefreshing = false;
-        }
-    }
-
-    private void SetRefreshing(bool value)
-    {
-        Element? element = lst_produtos;
-
-        while (element != null)
-        {
-            if (element is RefreshView rv)
-            {
-                rv.IsRefreshing = value;
-                return;
-            }
-
-            element = element.Parent;
         }
     }
 }

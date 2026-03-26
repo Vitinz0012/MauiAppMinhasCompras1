@@ -12,22 +12,20 @@ namespace MauiAppMinhasCompras.Models
         public string Descricao
         {
             get => _descricao;
-
             set
             {
                 if (string.IsNullOrWhiteSpace(value))
-                {
                     throw new ArgumentException("Por favor, preencha a descrição corretamente");
-                }
 
                 _descricao = value.Trim();
             }
         }
 
         public double Quantidade { get; set; }
-
         public double Preco { get; set; }
 
         public double Total => Quantidade * Preco;
+
+        public string Categoria { get; set; } = string.Empty;
     }
 }
